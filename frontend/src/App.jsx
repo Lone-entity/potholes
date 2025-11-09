@@ -3,7 +3,6 @@ import React, { useState, useEffect, useRef } from "react";
 const styles = {
   container: {
     minHeight: "100vh",
-    height: "100vh",
     background:
       "linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)",
     fontFamily:
@@ -11,14 +10,9 @@ const styles = {
     color: "#fff",
     padding: "0",
     margin: "0",
-    position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    overflow: "auto",
     display: "flex",
     flexDirection: "column",
+    width: "100%",
   },
   backgroundOrbs: {
     position: "fixed",
@@ -69,9 +63,9 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     padding: "2rem",
-    maxWidth: "100%",
-    margin: "0 auto",
     width: "100%",
+    maxWidth: "none",
+    boxSizing: "border-box",
   },
   header: {
     fontSize: "3.5rem",
@@ -95,18 +89,23 @@ const styles = {
     border: "1px solid rgba(255, 255, 255, 0.1)",
     boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
     display: "grid",
-    gridTemplateColumns: "420px 1fr",
-    gap: "2rem",
-    flex: 1,
-    minHeight: 0,
+    gridTemplateColumns: "450px 1fr",
+    gap: "2.5rem",
+    minHeight: "650px",
     animation: "fadeInUp 0.8s ease-out 0.2s both",
     willChange: "transform, opacity",
+    alignItems: "stretch",
+    width: "100%",
+    maxWidth: "none",
   },
   leftPanel: {
     display: "flex",
     flexDirection: "column",
     gap: "1.5rem",
-    overflowY: "auto",
+    overflowY: "hidden",
+    minWidth: "450px",
+    maxHeight: "100%",
+    flex: "0 0 450px",
   },
   title: {
     fontSize: "1.5rem",
@@ -141,6 +140,50 @@ const styles = {
     cursor: "not-allowed",
     opacity: 0.5,
   },
+  buttonGroup: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "1rem",
+  },
+  button: {
+    padding: "1rem 1.5rem",
+    borderRadius: "14px",
+    fontSize: "0.95rem",
+    fontWeight: "600",
+    border: "none",
+    cursor: "pointer",
+    transition: "all 0.3s ease",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "0.5rem",
+    outline: "none",
+  },
+  buttonStop: {
+    background: "rgba(239, 68, 68, 0.2)",
+    border: "2px solid rgba(239, 68, 68, 0.4)",
+    color: "#ef4444",
+  },
+  buttonStopHover: {
+    background: "rgba(239, 68, 68, 0.3)",
+    transform: "translateY(-2px)",
+    boxShadow: "0 8px 25px rgba(239, 68, 68, 0.3)",
+  },
+  buttonRestart: {
+    background: "rgba(34, 197, 94, 0.2)",
+    border: "2px solid rgba(34, 197, 94, 0.4)",
+    color: "#22c55e",
+  },
+  buttonRestartHover: {
+    background: "rgba(34, 197, 94, 0.3)",
+    transform: "translateY(-2px)",
+    boxShadow: "0 8px 25px rgba(34, 197, 94, 0.3)",
+  },
+  buttonDisabled: {
+    opacity: 0.4,
+    cursor: "not-allowed",
+    transform: "none",
+  },
   statusBadge: {
     display: "inline-flex",
     alignItems: "center",
@@ -151,6 +194,9 @@ const styles = {
     fontWeight: "600",
     transition: "all 0.3s ease",
     animation: "fadeIn 0.5s ease",
+    minHeight: "54px",
+    width: "100%",
+    justifyContent: "center",
   },
   statusConnected: {
     background: "rgba(34, 197, 94, 0.15)",
@@ -182,19 +228,16 @@ const styles = {
     transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
     position: "relative",
     overflow: "hidden",
+    minHeight: "70px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   },
   alertGreen: {
     background: "rgba(34, 197, 94, 0.2)",
     border: "2px solid rgba(34, 197, 94, 0.4)",
     color: "#22c55e",
     boxShadow: "0 0 30px rgba(34, 197, 94, 0.3)",
-    animation: "alertPulse 2s ease-in-out infinite",
-  },
-  alertYellow: {
-    background: "rgba(251, 146, 60, 0.2)",
-    border: "2px solid rgba(251, 146, 60, 0.4)",
-    color: "#fb923c",
-    boxShadow: "0 0 30px rgba(251, 146, 60, 0.3)",
     animation: "alertPulse 2s ease-in-out infinite",
   },
   alertRed: {
@@ -208,6 +251,7 @@ const styles = {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
     gap: "1rem",
+    flex: "0 0 auto",
   },
   infoBox: {
     background: "rgba(255, 255, 255, 0.05)",
@@ -220,6 +264,10 @@ const styles = {
     position: "relative",
     overflow: "hidden",
     willChange: "transform",
+    minHeight: "140px",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
   },
   infoBoxHover: {
     transform: "translateY(-4px) scale(1.02)",
@@ -257,6 +305,9 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     minHeight: 0,
+    height: "100%",
+    overflow: "hidden",
+    flex: 1,
   },
   videoWrapper: {
     position: "relative",
@@ -264,12 +315,13 @@ const styles = {
     overflow: "hidden",
     background: "rgba(0, 0, 0, 0.4)",
     border: "1px solid rgba(255, 255, 255, 0.1)",
-    flex: 1,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     boxShadow: "0 15px 50px rgba(0, 0, 0, 0.5)",
-    minHeight: "400px",
+    minHeight: "600px",
+    width: "100%",
+    flex: 1,
   },
   imageContainer: {
     width: "100%",
@@ -320,10 +372,16 @@ const keyframes = `
   box-sizing: border-box;
 }
 
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
 body {
   margin: 0;
   padding: 0;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 @keyframes float {
@@ -385,6 +443,21 @@ body {
     gap: 1.5rem !important;
   }
 }
+
+.responsive-card {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+/* Hide all scrollbars */
+::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
 `;
 
 export default function App() {
@@ -396,18 +469,31 @@ export default function App() {
   const [statusText, setStatusText] = useState("Connecting...");
   const [error, setError] = useState("");
   const [inputHover, setInputHover] = useState(false);
+  const [stopHover, setStopHover] = useState(false);
+  const [restartHover, setRestartHover] = useState(false);
   const [currentHover, setCurrentHover] = useState(false);
   const [totalHover, setTotalHover] = useState(false);
   const [hasImage, setHasImage] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const imgRef = useRef(null);
   const wsRef = useRef(null);
   const sendQueueRef = useRef([]);
   const prevCountRef = useRef(0);
+  const lastAlertTimeRef = useRef(0);
+  const audioContextRef = useRef(null);
+  const videoElRef = useRef(null);
+  const processingStoppedRef = useRef(false);
+  const fileInputRef = useRef(null);
+  const currentVideoFileRef = useRef(null);
 
   useEffect(() => {
     const styleTag = document.createElement("style");
     styleTag.innerHTML = keyframes;
     document.head.appendChild(styleTag);
+
+    // Initialize audio context
+    audioContextRef.current = new (window.AudioContext ||
+      window.webkitAudioContext)();
 
     const WS_URL = "ws://localhost:8000/ws/pothole";
     const ws = new WebSocket(WS_URL);
@@ -440,26 +526,24 @@ export default function App() {
         const { frame, count } = data;
         const currentCount = count ?? 0;
 
-        setPotholeCount(currentCount);
-
-        // Track total unique potholes
-        if (currentCount > prevCountRef.current) {
-          const newPotholes = currentCount - prevCountRef.current;
-          setTotalPotholes((prev) => prev + newPotholes);
-        }
-        prevCountRef.current = currentCount;
-
+        // Only process and count if 3 or more potholes detected
         if (currentCount >= 3) {
+          setPotholeCount(currentCount);
+
+          // Track total unique potholes only when threshold is met
+          if (currentCount > prevCountRef.current) {
+            const newPotholes = currentCount - prevCountRef.current;
+            setTotalPotholes((prev) => prev + newPotholes);
+          }
+          prevCountRef.current = currentCount;
+
           setAlertVariant("red");
           setAlertMsg(`🚨 CRITICAL: ${currentCount} Potholes in View!`);
-        } else if (currentCount > 0) {
-          setAlertVariant("yellow");
-          setAlertMsg(
-            `⚠️ Warning: ${currentCount} Pothole${
-              currentCount > 1 ? "s" : ""
-            } in View`
-          );
+          playVoiceAlert();
         } else {
+          // Reset display when below threshold
+          setPotholeCount(0);
+          prevCountRef.current = 0;
           setAlertVariant("green");
           setAlertMsg("✅ Road Conditions: Clear");
         }
@@ -477,14 +561,15 @@ export default function App() {
       try {
         ws.close();
       } catch (e) {}
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
       document.head.removeChild(styleTag);
     };
   }, []);
 
   const getAlertStyle = () => {
     if (alertVariant === "red") return { ...styles.alert, ...styles.alertRed };
-    if (alertVariant === "yellow")
-      return { ...styles.alert, ...styles.alertYellow };
     return { ...styles.alert, ...styles.alertGreen };
   };
 
@@ -501,19 +586,53 @@ export default function App() {
     return "#fb923c";
   };
 
+  const playVoiceAlert = () => {
+    // Throttle alerts - only play once every 5 seconds
+    const now = Date.now();
+    if (now - lastAlertTimeRef.current < 5000) return;
+    lastAlertTimeRef.current = now;
+
+    // Use Web Speech API for voice alert
+    if ("speechSynthesis" in window) {
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(
+        "Potholes ahead, be careful"
+      );
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
   const handleVideoUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Reset counters on new upload
+    // Store the current video file
+    currentVideoFileRef.current = file;
+
+    // Reset everything and start processing
+    handleStop();
+    startVideoProcessing(file);
+  };
+
+  const startVideoProcessing = (file) => {
+    // Reset counters
     setPotholeCount(0);
     setTotalPotholes(0);
     prevCountRef.current = 0;
+    processingStoppedRef.current = false;
+    setIsProcessing(true);
 
     const reader = new FileReader();
     reader.onload = () => {
       const videoUrl = reader.result;
       const videoEl = document.createElement("video");
+      videoElRef.current = videoEl;
       videoEl.src = videoUrl;
       videoEl.muted = true;
       videoEl.playsInline = true;
@@ -521,7 +640,6 @@ export default function App() {
       const TARGET_FPS = 12;
       const FRAME_INTERVAL_MS = 1000 / TARGET_FPS;
       let lastSendTime = 0;
-      let stopped = false;
 
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
@@ -537,7 +655,12 @@ export default function App() {
         });
 
         const frameLoop = () => {
-          if (videoEl.paused || videoEl.ended || stopped) return;
+          if (videoEl.paused || videoEl.ended || processingStoppedRef.current) {
+            if (videoEl.ended || processingStoppedRef.current) {
+              setIsProcessing(false);
+            }
+            return;
+          }
 
           const now = performance.now();
           if (now - lastSendTime >= FRAME_INTERVAL_MS) {
@@ -580,6 +703,38 @@ export default function App() {
     reader.readAsDataURL(file);
   };
 
+  const handleStop = () => {
+    processingStoppedRef.current = true;
+    setIsProcessing(false);
+
+    // Stop video playback
+    if (videoElRef.current) {
+      videoElRef.current.pause();
+      videoElRef.current.currentTime = 0;
+    }
+
+    // Cancel any ongoing speech
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+  };
+
+  const handleRestart = () => {
+    // Check if we have a video file to restart
+    if (!currentVideoFileRef.current) return;
+
+    // Stop current processing
+    handleStop();
+
+    // Reset counters
+    setPotholeCount(0);
+    setTotalPotholes(0);
+    prevCountRef.current = 0;
+
+    // Restart with the same video
+    startVideoProcessing(currentVideoFileRef.current);
+  };
+
   return (
     <div style={styles.container}>
       <div style={styles.backgroundOrbs}>
@@ -591,11 +746,12 @@ export default function App() {
       <div style={styles.content}>
         <h1 style={styles.header}>🛣️ Pothole Detection System</h1>
 
-        <div className="responsive-card" style={styles.card}>
+        <div style={styles.card} className="responsive-card">
           <div style={styles.leftPanel}>
             <div>
               <h2 style={styles.title}>📤 Upload Video</h2>
               <input
+                ref={fileInputRef}
                 type="file"
                 accept="video/*"
                 onChange={handleVideoUpload}
@@ -608,6 +764,41 @@ export default function App() {
                   ...(!wsConnected ? styles.inputDisabled : {}),
                 }}
               />
+            </div>
+
+            <div style={styles.buttonGroup}>
+              <button
+                onClick={handleStop}
+                disabled={!isProcessing}
+                onMouseEnter={() => setStopHover(true)}
+                onMouseLeave={() => setStopHover(false)}
+                style={{
+                  ...styles.button,
+                  ...styles.buttonStop,
+                  ...(stopHover && isProcessing ? styles.buttonStopHover : {}),
+                  ...(!isProcessing ? styles.buttonDisabled : {}),
+                }}
+              >
+                ⏸️ Stop
+              </button>
+              <button
+                onClick={handleRestart}
+                disabled={!currentVideoFileRef.current}
+                onMouseEnter={() => setRestartHover(true)}
+                onMouseLeave={() => setRestartHover(false)}
+                style={{
+                  ...styles.button,
+                  ...styles.buttonRestart,
+                  ...(restartHover && currentVideoFileRef.current
+                    ? styles.buttonRestartHover
+                    : {}),
+                  ...(!currentVideoFileRef.current
+                    ? styles.buttonDisabled
+                    : {}),
+                }}
+              >
+                🔄 Restart
+              </button>
             </div>
 
             <div style={getStatusStyle()}>

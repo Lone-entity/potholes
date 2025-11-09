@@ -1,4 +1,3 @@
-# backend.py
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import asyncio
@@ -87,6 +86,8 @@ async def websocket_endpoint(websocket: WebSocket):
                 frame_for_model = safe_resize(frame, max_side=1024)
 
                 num_potholes = 0
+                detected_boxes = []
+                
                 try:
                     if model is None:
                         logger.warning("Model not loaded - skipping inference")
@@ -98,20 +99,19 @@ async def websocket_endpoint(websocket: WebSocket):
                     logger.exception("Model inference error: %s", e)
                     results = []
 
-                # Draw boxes if present
+                # Collect boxes and count potholes first
                 if hasattr(results, "boxes") and results.boxes is not None:
-                    # results.boxes is a list-like of Box objects
                     for box in results.boxes:
                         try:
-                            # get coordinates & confidence (different ultralytics versions differ)
+                            # get coordinates & confidence
                             xyxy = box.xyxy[0].cpu().numpy() if hasattr(box, "xyxy") else None
                             conf = float(box.conf[0]) if hasattr(box, "conf") else None
                             if xyxy is not None:
                                 x1, y1, x2, y2 = int(xyxy[0]), int(xyxy[1]), int(xyxy[2]), int(xyxy[3])
-                                cv2.rectangle(frame_for_model, (x1, y1), (x2, y2), (0, 0, 255), 2)
-                                label = f"Pothole {conf:.2f}" if conf is not None else "Pothole"
-                                cv2.putText(frame_for_model, label, (x1, max(10, y1 - 10)),
-                                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+                                detected_boxes.append({
+                                    'coords': (x1, y1, x2, y2),
+                                    'conf': conf
+                                })
                                 num_potholes += 1
                         except Exception:
                             # fallback: try to get boxes via results.boxes.xyxy if available
@@ -119,10 +119,23 @@ async def websocket_endpoint(websocket: WebSocket):
                                 arrs = getattr(results, "boxes").xyxy.cpu().numpy()
                                 for pts in arrs:
                                     x1, y1, x2, y2 = map(int, pts)
-                                    cv2.rectangle(frame_for_model, (x1, y1), (x2, y2), (0, 0, 255), 2)
+                                    detected_boxes.append({
+                                        'coords': (x1, y1, x2, y2),
+                                        'conf': None
+                                    })
                                     num_potholes += 1
                             except Exception:
-                                logger.exception("Error while drawing boxes")
+                                logger.exception("Error while collecting boxes")
+
+                # Only draw boxes if 3 or more potholes detected
+                if num_potholes >= 3:
+                    for box_info in detected_boxes:
+                        x1, y1, x2, y2 = box_info['coords']
+                        conf = box_info['conf']
+                        cv2.rectangle(frame_for_model, (x1, y1), (x2, y2), (0, 0, 255), 2)
+                        label = f"Pothole {conf:.2f}" if conf is not None else "Pothole"
+                        cv2.putText(frame_for_model, label, (x1, max(10, y1 - 10)),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
                 # encode and send
                 encoded = await encode_frame(frame_for_model)
